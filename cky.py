@@ -183,8 +183,46 @@ class CkyParser(object):
         Parse the input tokens and return a parse table and a probability table.
         """
         # TODO, part 3
-        table = None
-        probs = None
+        n = len(tokens)
+        table = {(i // (n + 1), i % (n + 1)): dict() for i in range((n + 1) ** 2)}
+        probs = {(i // (n + 1), i % (n + 1)): dict() for i in range((n + 1) ** 2)}
+        for i in range(n):
+            for rule in self.grammar.rhs_to_rules[(tokens[i],)]:
+                # print(rule)
+                table[(i, i + 1)][rule[0]] = rule[1][0]
+                probs[(i, i + 1)][rule[0]] = math.log(rule[2])
+                # print(table[(i, i + 1)])
+                # print(probs[(i, i + 1)])
+        # print(table)
+        for l in range(2, n + 1):
+            for i in range(n - l + 1):
+                j = i + l
+                for k in range(i + 1, j):
+                    max_prob = -float("inf")
+                    for rhs, rules in self.grammar.rhs_to_rules.items():
+                        if (
+                            len(rhs) == 2
+                            and rhs[0] in table[(i, k)]
+                            and rhs[1] in table[(k, j)]
+                        ):
+                            for rule in rules:
+                                lhs = rule[0]
+                                # print("lhs", lhs)
+                                # print("rhs", rhs)
+                                # print("rule", rule)
+                                prob = (
+                                    probs[(i, k)][rhs[0]]
+                                    + probs[(k, j)][rhs[1]]
+                                    # + rule[2]
+                                )
+                                if prob > max_prob:
+                                    max_prob = prob
+                                    table[(i, j)][lhs] = (
+                                        (rhs[0], i, k),
+                                        (rhs[1], k, j),
+                                    )
+                                    probs[(i, j)][lhs] = prob
+        # print(table)
         return table, probs
 
 
@@ -202,6 +240,6 @@ if __name__ == "__main__":
         parser = CkyParser(grammar)
         toks = ["flights", "from", "miami", "to", "cleveland", "."]
         print(parser.is_in_language(toks))
-        # table,probs = parser.parse_with_backpointers(toks)
-        # assert check_table_format(chart)
-        # assert check_probs_format(probs)
+        table, probs = parser.parse_with_backpointers(toks)
+        assert check_table_format(table)
+        assert check_probs_format(probs)
