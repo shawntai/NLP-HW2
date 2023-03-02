@@ -205,6 +205,9 @@ class CkyParser(object):
                             and rhs[0] in table[(i, k)]
                             and rhs[1] in table[(k, j)]
                         ):
+                            if i == 1 and j == 5 and k == 3:
+                                for rule in rules:
+                                    print(rule)
                             for rule in rules:
                                 lhs = rule[0]
                                 # print("lhs", lhs)
@@ -213,16 +216,24 @@ class CkyParser(object):
                                 prob = (
                                     probs[(i, k)][rhs[0]]
                                     + probs[(k, j)][rhs[1]]
-                                    # + rule[2]
+                                    + rule[2]
                                 )
-                                if prob > max_prob:
-                                    max_prob = prob
+                                # if prob > max_prob:
+                                #     max_prob = prob
+                                if lhs not in table[(i, j)]:
                                     table[(i, j)][lhs] = (
                                         (rhs[0], i, k),
                                         (rhs[1], k, j),
                                     )
                                     probs[(i, j)][lhs] = prob
-        # print(table)
+                                else:
+                                    if prob > probs[(i, j)][lhs]:
+                                        table[(i, j)][lhs] = (
+                                            (rhs[0], i, k),
+                                            (rhs[1], k, j),
+                                        )
+                                        probs[(i, j)][lhs] = prob
+        print(table)
         return table, probs
 
 
@@ -231,7 +242,30 @@ def get_tree(chart, i, j, nt):
     Return the parse-tree rooted in non-terminal nt and covering span i,j.
     """
     # TODO: Part 4
-    return None
+    if i + 1 == j:
+        return (nt, chart[(i, j)][nt])
+    else:
+        # print("\n\n\nchart[(i, j)][nt]: ",chart[(i, j)][nt])
+        lnt, i, k = chart[(i, j)][nt][0]
+        rnt, _, j = chart[(i, j)][nt][1]
+        return (
+            nt,
+            get_tree(chart, i, k, lnt),
+            get_tree(chart, k, j, rnt),
+        )
+    return (
+        "TOP",
+        (
+            "NP",
+            ("NP", "flights"),
+            (
+                "NPBAR",
+                ("PP", ("FROM", "from"), ("NP", "miami")),
+                ("PP", ("TO", "to"), ("NP", "cleveland")),
+            ),
+        ),
+        ("PUN", "."),
+    )
 
 
 if __name__ == "__main__":
@@ -241,5 +275,6 @@ if __name__ == "__main__":
         toks = ["flights", "from", "miami", "to", "cleveland", "."]
         print(parser.is_in_language(toks))
         table, probs = parser.parse_with_backpointers(toks)
+        print("====\n\n\n\n", get_tree(table, 0, len(toks), grammar.startsymbol))
         assert check_table_format(table)
         assert check_probs_format(probs)
