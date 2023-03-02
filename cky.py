@@ -143,7 +143,40 @@ class CkyParser(object):
         return False
         """
         # TODO, part 2
-        return False
+        n = len(tokens)
+        # chart = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
+        chart = [[[] for _ in range(n + 1)] for _ in range(n + 1)]
+        # for i in range(n):
+        #     for rule in self.grammar.get_lexical_rules(tokens[i]):
+        #         chart[i][i + 1][rule.lhs] = rule.logprob
+        for i in range(n):
+            for rules in self.grammar.rhs_to_rules[(tokens[i],)]:
+                chart[i][i + 1].append(rules[0])
+
+            # chart[i][i + 1].extend(self.grammar.rhs_to_rules[(tokens[i],)])
+        for l in range(2, n + 1):
+            for i in range(n - l + 1):
+                j = i + l
+                for k in range(i + 1, j):
+                    for rhs, rules in self.grammar.rhs_to_rules.items():
+                        if (
+                            len(rhs) == 2
+                            and rhs[0] in chart[i][k]
+                            and rhs[1] in chart[k][j]
+                        ):
+                            chart[i][j].extend([rule[0] for rule in rules])
+                            chart[i][j] = list(set(chart[i][j]))
+        return self.grammar.startsymbol in chart[0][n]
+
+        # for rule in self.grammar.get_binary_rules():
+        #     if chart[i][k][rule.rhs[0]] and chart[k][j][rule.rhs[1]]:
+        #         chart[i][j][rule.lhs] = max(
+        #             chart[i][j][rule.lhs],
+        #             chart[i][k][rule.rhs[0]]
+        #             + chart[k][j][rule.rhs[1]]
+        #             + rule.logprob,
+        #         )
+        # return chart[0][n]["S"] > -float("inf")
 
     def parse_with_backpointers(self, tokens):
         """
@@ -168,7 +201,7 @@ if __name__ == "__main__":
         grammar = Pcfg(grammar_file)
         parser = CkyParser(grammar)
         toks = ["flights", "from", "miami", "to", "cleveland", "."]
-        # print(parser.is_in_language(toks))
+        print(parser.is_in_language(toks))
         # table,probs = parser.parse_with_backpointers(toks)
         # assert check_table_format(chart)
         # assert check_probs_format(probs)
