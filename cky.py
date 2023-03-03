@@ -144,16 +144,11 @@ class CkyParser(object):
         """
         # TODO, part 2
         n = len(tokens)
-        # chart = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
         chart = [[[] for _ in range(n + 1)] for _ in range(n + 1)]
-        # for i in range(n):
-        #     for rule in self.grammar.get_lexical_rules(tokens[i]):
-        #         chart[i][i + 1][rule.lhs] = rule.logprob
         for i in range(n):
             for rules in self.grammar.rhs_to_rules[(tokens[i],)]:
                 chart[i][i + 1].append(rules[0])
 
-            # chart[i][i + 1].extend(self.grammar.rhs_to_rules[(tokens[i],)])
         for l in range(2, n + 1):
             for i in range(n - l + 1):
                 j = i + l
@@ -168,16 +163,6 @@ class CkyParser(object):
                             chart[i][j] = list(set(chart[i][j]))
         return self.grammar.startsymbol in chart[0][n]
 
-        # for rule in self.grammar.get_binary_rules():
-        #     if chart[i][k][rule.rhs[0]] and chart[k][j][rule.rhs[1]]:
-        #         chart[i][j][rule.lhs] = max(
-        #             chart[i][j][rule.lhs],
-        #             chart[i][k][rule.rhs[0]]
-        #             + chart[k][j][rule.rhs[1]]
-        #             + rule.logprob,
-        #         )
-        # return chart[0][n]["S"] > -float("inf")
-
     def parse_with_backpointers(self, tokens):
         """
         Parse the input tokens and return a parse table and a probability table.
@@ -188,17 +173,13 @@ class CkyParser(object):
         probs = {(i // (n + 1), i % (n + 1)): dict() for i in range((n + 1) ** 2)}
         for i in range(n):
             for rule in self.grammar.rhs_to_rules[(tokens[i],)]:
-                # print(rule)
                 table[(i, i + 1)][rule[0]] = rule[1][0]
                 probs[(i, i + 1)][rule[0]] = math.log(rule[2])
-                # print(table[(i, i + 1)])
-                # print(probs[(i, i + 1)])
-        # print(table)
+
         for l in range(2, n + 1):
             for i in range(n - l + 1):
                 j = i + l
                 for k in range(i + 1, j):
-                    max_prob = -float("inf")
                     for rhs, rules in self.grammar.rhs_to_rules.items():
                         if (
                             len(rhs) == 2
@@ -210,30 +191,20 @@ class CkyParser(object):
                                     print(rule)
                             for rule in rules:
                                 lhs = rule[0]
-                                # print("lhs", lhs)
-                                # print("rhs", rhs)
-                                # print("rule", rule)
                                 prob = (
                                     probs[(i, k)][rhs[0]]
                                     + probs[(k, j)][rhs[1]]
                                     + rule[2]
                                 )
-                                # if prob > max_prob:
-                                #     max_prob = prob
-                                if lhs not in table[(i, j)]:
+                                if (
+                                    lhs not in table[(i, j)]
+                                    or prob > probs[(i, j)][lhs]
+                                ):
                                     table[(i, j)][lhs] = (
                                         (rhs[0], i, k),
                                         (rhs[1], k, j),
                                     )
                                     probs[(i, j)][lhs] = prob
-                                else:
-                                    if prob > probs[(i, j)][lhs]:
-                                        table[(i, j)][lhs] = (
-                                            (rhs[0], i, k),
-                                            (rhs[1], k, j),
-                                        )
-                                        probs[(i, j)][lhs] = prob
-        print(table)
         return table, probs
 
 
@@ -245,7 +216,6 @@ def get_tree(chart, i, j, nt):
     if i + 1 == j:
         return (nt, chart[(i, j)][nt])
     else:
-        # print("\n\n\nchart[(i, j)][nt]: ",chart[(i, j)][nt])
         lnt, i, k = chart[(i, j)][nt][0]
         rnt, _, j = chart[(i, j)][nt][1]
         return (
@@ -253,19 +223,6 @@ def get_tree(chart, i, j, nt):
             get_tree(chart, i, k, lnt),
             get_tree(chart, k, j, rnt),
         )
-    return (
-        "TOP",
-        (
-            "NP",
-            ("NP", "flights"),
-            (
-                "NPBAR",
-                ("PP", ("FROM", "from"), ("NP", "miami")),
-                ("PP", ("TO", "to"), ("NP", "cleveland")),
-            ),
-        ),
-        ("PUN", "."),
-    )
 
 
 if __name__ == "__main__":

@@ -56,7 +56,6 @@ class Pcfg(object):
             for rule in rules:
                 if len(rule[1]) == 1 and rule[1][0] in self.lhs_to_rules:
                     print(f"Rule {rule} has a nonterminal on the right hand side.")
-                    # print(f"Rule {rule} has a terminal on the right hand side.")
                     return False
                 if len(rule[1]) == 2 and (
                     rule[1][0] not in self.lhs_to_rules
@@ -76,7 +75,6 @@ class Pcfg(object):
 
 
 if __name__ == "__main__":
-    # with open(sys.argv[1], "r") as grammar_file:
-    with open("atis3.pcfg", "r") as grammar_file:
+    with open(sys.argv[1], "r") as grammar_file:
         grammar = Pcfg(grammar_file)
         print(grammar.verify_grammar())
