@@ -1,4 +1,4 @@
-### **Programming Homework 2: Parsing with Context Free Grammar (100 pts)**
+## **Programming Homework 2: Parsing with Context Free Grammar (100 pts)**
 
 The instructions below are fairly specific and it is okay to deviate from implementation details. **However: You will be graded based on the functionality of each function. Make sure the function signatures (function names, parameter and return types/data structures) match exactly the description in this assignment.**
 
